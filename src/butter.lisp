@@ -1,7 +1,7 @@
 (in-package :butter)
 
 (defmacro with-gensyms ((&rest vars) &rest body)
-  `(let ,(loop for var in vars collect `(,var (gensym))) ,@body))
+  `(let ,(loop for var in vars collect `(,var (gensym ,(princ-to-string var)))) ,@body))
 (defmacro do-in-package (package &body body)
   `(let ((*package* (find-package ,package)))
      ,@body))
@@ -85,7 +85,7 @@
 (define-test-type :function (function-name &rest arguments)
   (let ((argument-vars (mapcar (lambda (argument)
 				 (declare (ignore argument))
-				 (if (keywordp argument) argument (gensym)))
+				 (if (keywordp argument) argument (gensym (princ-to-string argument))))
 			       arguments)))
     `(let ,(remove nil (mapcar (lambda (var argument) (unless (keywordp var) (list var argument)))
 			       argument-vars arguments))
