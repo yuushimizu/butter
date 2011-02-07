@@ -99,7 +99,7 @@
     `(let ,(remove nil (mapcar (lambda (var argument) (unless (keywordp var) (list var argument)))
 			       argument-vars arguments))
        (call-with-function-fail-handler (lambda () (test t ,(call-form function-name argument-vars)))
-					#'fail ',function-name ',argument-vars))))
+					#'fail ',function-name (list ,@argument-vars)))))
 (defun call-with-no-inner-condition-fail-handler (function fail-function)
   (handler-case (funcall function)
     (test-failed (condition) (funcall fail-function (message condition)))))
