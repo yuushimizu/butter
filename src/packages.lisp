@@ -31,4 +31,5 @@
 	   :deftest
 	   :run-test
 	   :test-names
-	   :run-tests))
+
+           :run-with-simple-cui-monitor))

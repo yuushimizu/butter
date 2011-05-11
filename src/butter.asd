@@ -10,4 +10,5 @@
     :version "0.0.1"
     :description "An unit testing frame"
     :components ((:file "packages")
-		 (:file "butter" :depends-on ("packages"))))
+		 (:file "butter" :depends-on ("packages"))
+                 (:file "simple-cui-monitor" :depends-on ("butter"))))
