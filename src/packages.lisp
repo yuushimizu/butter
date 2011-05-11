@@ -30,6 +30,7 @@
 	   :test-function
 	   :deftest
 	   :run-test
-	   :test-names
-
-           :run-with-simple-cui-monitor))
+	   :test-names))
+(defpackage :butter/cui
+  (:use :common-lisp :butter)
+  (:export :run))

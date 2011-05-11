@@ -1,11 +1,6 @@
 (in-package :butter)
-
 (defmacro with-gensyms ((&rest vars) &rest body)
   `(let ,(loop for var in vars collect `(,var (gensym ,(princ-to-string var)))) ,@body))
-(defmacro do-in-package (package &body body)
-  `(let ((*package* (find-package ,package)))
-     ,@body))
-
 (define-condition test-condition (condition)
   ((test-name :initarg :test-name :reader test-name)))
 (define-condition test-succeeded (test-condition) ())

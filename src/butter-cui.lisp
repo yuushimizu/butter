@@ -1,4 +1,7 @@
-(in-package :butter)
+(in-package :butter/cui)
+(defmacro do-in-package (package &body body)
+  `(let ((*package* (find-package ,package)))
+     ,@body))
 (defun print-condition-test-names (condition stream)
   (when (inner-condition condition) (print-condition-test-names (inner-condition condition) stream))
   (format stream "  in ~S~%" (test-name condition)))
@@ -34,7 +37,7 @@
       (call-with-test-counter function)
     (format stream "All tests finished, ~A.~%" (format-test-count succeeded failed))
     result))
-(defun run-with-simple-cui-monitor (package &key (show-details nil))
+(defun run (package &key (show-details nil))
   (do-in-package package
     (call-with-default-suite-printer
      (lambda () (reduce (lambda (result test-name)
