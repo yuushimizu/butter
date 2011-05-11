@@ -126,7 +126,6 @@
   `(handler-case (progn ,@body (fail ,(format nil "An expected condition ~A was not signalled." condition-type)))
      (,condition-type ())))
 
-
 (define-condition no-test-found (error)
   ((test-name :initarg :test-name :reader test-name)))
 (eval-when (:compile-toplevel :load-toplevel :execute)
