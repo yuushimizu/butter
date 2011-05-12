@@ -54,6 +54,14 @@
   (test evenp 20)
   (test number-in 10 30 20))
 
+(deftest function
+  (test :function = 9 (* 3 3))
+  (test :function string= "foobar" (concatenate 'string "foo" "bar"))
+  (test :function < 10 20)
+  (test :function typep 10 'integer)
+  (test :function evenp 20)
+  (test :function number-in 10 30 20))
+
 (deftest type
   (test :type integer 12)
   (test :type string "foo")
