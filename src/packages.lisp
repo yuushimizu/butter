@@ -33,4 +33,4 @@
 	   :test-names))
 (defpackage :butter/cui
   (:use :common-lisp :butter)
-  (:export :run))
+  (:export :begin :run))
