@@ -50,11 +50,10 @@
 (defmacro define-macro-test-type (type (&rest lambda-list) &body body)
   (with-gensyms (type% arguments%)
     `(eval-when (:compile-toplevel :load-toplevel :execute)
-       (progn
-         (defmethod test-form-expand ((,type% (eql ',type)) ,arguments%)
-           (declare (ignore ,type%))
-           (destructuring-bind ,lambda-list ,arguments% ,@body))
-         ',type))))
+       (defmethod test-form-expand ((,type% (eql ',type)) ,arguments%)
+         (declare (ignore ,type%))
+         (destructuring-bind ,lambda-list ,arguments% ,@body))
+       ',type)))
 (defun call-with-default-success-handler (function success-function)
   (handler-case (funcall function)
     (test-succeeded ()))
@@ -65,11 +64,10 @@
 (defmacro define-test-type (type (&rest lambda-list) &body body)
   (with-gensyms (type% arguments%)
     `(eval-when (:compile-toplevel :load-toplevel :execute)
-       (progn
-         (defmethod test-form-expand ((,type% (eql ',type)) ,arguments%)
-           (destructuring-bind ,lambda-list ,arguments%
-             `(as-standard-test ,,type% ,,arguments% ,,@body)))
-         ',type))))
+       (defmethod test-form-expand ((,type% (eql ',type)) ,arguments%)
+         (destructuring-bind ,lambda-list ,arguments%
+           `(as-standard-test ,,type% ,,arguments% ,,@body)))
+       ',type)))
 (defmacro test (type &rest arguments)
   (test-form-expand type arguments))
 (defmacro tests (&rest argument-lists)
