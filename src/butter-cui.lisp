@@ -13,8 +13,6 @@
     (handler-bind ((test-succeeded (lambda (condition) (declare (ignore condition)) (incf succeeded)))
 		   (test-aborted (lambda (condition) (declare (ignore condition)) (incf failed))))
       (values (funcall function) succeeded failed))))
-(defun format-test-count (succeeded failed)
-  (format nil "~D test~P succeeded, ~D tset~P failed" succeeded succeeded failed failed))
 (defun call-with-default-test-printer (function &key (stream *standard-output*) (show-details t))
   (multiple-value-bind (result succeeded failed)
       (call-with-test-counter
