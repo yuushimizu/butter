@@ -22,7 +22,7 @@
   (defgeneric occurred-error (condition)
     (:method ((condition test-error-occurred))
       (recursive-reader condition 'occurred-error)))
-  (defgeneric test-condition-result (condition)
+  (defgeneric test-condition-succeeded-p (condition)
     (:method (condition) (declare (ignore condition)) t)
     (:method ((condition test-aborted)) (declare (ignore condition)) nil))
 
@@ -35,19 +35,19 @@
     (handler-case (funcall function)
       (test-failed (condition) (funcall fail-function nil condition))))
   (defmacro in-test (name &body body)
-    (with-gensyms (name% result% fail-message% inner-condition%)
+    (with-gensyms (name% test-finished% result-condition% fail-message% inner-condition%)
       `(let ((,name% ,name))
          (call-as-test ,name%
                        (lambda ()
-                         (let ((,result% (catch ',result%
-                                           (flet ((success () (throw ',result% (make-condition 'test-succeeded :test-name ,name%)))
+                         (let ((,result-condition% (catch ',test-finished%
+                                           (flet ((success () (throw ',test-finished% (make-condition 'test-succeeded :test-name ,name%)))
                                                   (fail (,fail-message% &optional ,inner-condition%)
-                                                    (throw ',result% (make-condition 'test-failed :test-name ,name% :message ,fail-message% :inner-condition ,inner-condition%))))
+                                                    (throw ',test-finished% (make-condition 'test-failed :test-name ,name% :message ,fail-message% :inner-condition ,inner-condition%))))
                                              (declare (ignorable (function success) (function fail)))
                                              (call-with-default-fail-handler (lambda () ,@body) #'fail)
                                              nil))))
-                           (when ,result% (signal ,result%))
-                           (test-condition-result ,result%)))))))
+                           (when ,result-condition% (signal ,result-condition%))
+                           (test-condition-succeeded-p ,result-condition%)))))))
   
   (defgeneric test-form-expand (type arguments))
   (defmacro define-macro-test-type (type (&rest lambda-list) &body body)
