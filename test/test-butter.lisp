@@ -1,5 +1,10 @@
 (in-package :butter-test)
 
+(define-test-type between (min max value)
+  (let ((value% (gensym)))
+    `(let ((,value% ,value))
+       (test and (<= ,min ,value%) (<= ,value% ,max)))))
+
 (deftest t
   (test t 10)
   (test t (> 20 10))
@@ -127,11 +132,6 @@
 	(2 8)
 	(4 (+ 3 3))
 	((+ 2 3) (+ 1 4))))
-
-(define-test-type between (min max value)
-  (let ((value% (gensym)))
-    `(let ((,value% ,value))
-       (test and (<= ,min ,value%) (<= ,value% ,max)))))
 
 (deftest define-test-type
   (test between 10 20 13)
