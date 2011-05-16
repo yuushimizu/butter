@@ -1,16 +1,18 @@
 (in-package :cl-user)
 (defpackage :butter
   (:use :common-lisp)
-  (:export :test-condition
-	   :test-name
+  (:export :test-context
+           :test-context-name
+           :test-context-parent
+           :test-condition
+           :test-condition-context
 	   :test-succeeded
-	   :test-aborted
-	   :inner-condition
 	   :test-failed
-	   :message
-	   :test-error-occurred
-	   :occurred-error
-	   :test-condition-result
+	   :test-failed-message
+           :test-condition-succeeded-p
+
+           :success-test
+           :fail-test
 
 	   :test-form-expand
 	   :define-test-type-without-success
