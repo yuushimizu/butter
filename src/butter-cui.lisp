@@ -27,7 +27,7 @@
                                 (invoke-restart 'fail-test (format nil "The error ~S was occurred with the message \"~A\"." condition condition)))))))
     (funcall function)))
 (defmacro begin (&body form)
-  `(call-with-default-test-printer (lambda () ,@form)))
+  `(call-with-default-test-printer (lambda () ,@form) :show-details t :invoke-debugger nil))
 (defun call-with-default-suite-printer (function &optional (stream *standard-output*))
   (multiple-value-bind (result succeeded failed)
       (call-with-test-counter function)

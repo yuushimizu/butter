@@ -74,14 +74,14 @@
 
 (deftest each
   (test :each ()
-	(eql 15 (+ 4 5 6 42))
+	(eql 15 (+ 4 5 6))
 	(string= "foobar" (concatenate 'string "foo" "bar")))
   (test :each eql
 	(10 (+ 4 6))
 	('x 'x))
   (test :each (eql 20)
-	((+ 14 6 42))
-	((* 2 10 42)))
+	((+ 14 6))
+	((* 2 10)))
   (test :each :type
 	(integer (+ 12 6))
 	(string "foo"))
@@ -105,8 +105,8 @@
 	(< 4 <- 4))
   (test :call 2* eql
 	(10 <- 5)
-	(20 <- "FOO")
-	(30 <- 42))
+	(20 <- 10)
+	(30 <- 15))
   (test :call - (> 10)
 	(<- 12 8)
 	(<- 16 10))
