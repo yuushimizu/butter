@@ -9,9 +9,8 @@
   (test t 10)
   (test t (> 20 10))
   (test t (string= "foo" (format nil "~A~A~A" #\f #\o #\o)))
-  (handler-case (test t (> 10 20))
-    (test-failed (failed)
-      (test equal '(t (> 10 20)) (test-context-name (test-condition-context failed))))))
+  (test :condition test-failed
+        (test t (> 10 20))))
 
 (deftest nil
   (test () t  10)
@@ -22,9 +21,8 @@
   (test not nil)
   (test not (< 20 10))
   (test not (string= "bar" (format nil "~A~A~A" #\f #\o #\o)))
-  (handler-case (test not (< 10 20))
-    (test-failed (failed)
-      (test equal '(not (< 10 20)) (test-context-name (test-condition-context failed))))))
+  (test :condition test-failed
+        (test not (< 10 20))))
 
 (deftest eq
   (test eq 'foo 'foo)
@@ -66,6 +64,11 @@
   (test :function typep 10 'integer)
   (test :function evenp 20)
   (test :function number-in 10 30 20))
+
+(deftest with-message
+  (test "add two numbers" = 30 (+ 20 10))
+  (test "append two lists" equal '(1 2 3 4) (append '(1 2) '(3 4)))
+  (test "10 < 20" < 10 20))
 
 (deftest type
   (test :type integer 12)

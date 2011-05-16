@@ -2,7 +2,7 @@
 (defun test-context-name-lines (context)
   (if context
       (concatenate 'string
-                   (format nil "~&#  in ~S~%" (test-context-name context))
+                   (format nil "~&#  in ~A~%" (test-context-name context))
                    (test-context-name-lines (test-context-parent context)))
       nil))
 (defun call-with-test-counter (function)
@@ -13,10 +13,10 @@
 (defun call-with-default-test-printer (function &key (stream *standard-output*) (show-details nil) (invoke-debugger nil))
   (handler-bind ((test-succeeded (lambda (condition)
                                    (let ((*print-pretty*))
-                                     (when show-details (format stream "~&ok - ~S~%" (test-context-name (test-condition-context condition)))))))
+                                     (when show-details (format stream "~&ok - ~A~%" (test-context-name (test-condition-context condition)))))))
                  (test-failed (lambda (condition)
                                 (let ((*print-pretty*))
-                                  (format stream "~&not ok - ~S~%#  ~A~%~A"
+                                  (format stream "~&not ok - ~A~%#  ~A~%~A"
                                           (test-context-name (test-condition-context condition))
                                           (test-failed-message condition)
                                           (test-context-name-lines (test-condition-context condition))))))

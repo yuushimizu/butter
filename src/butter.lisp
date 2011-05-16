@@ -20,7 +20,7 @@
   (defun call-with-test-handler (test-name function)
     (flet ((make-context ()
              (make-instance 'test-context
-                            :name test-name
+                            :name (princ-to-string test-name)
                             :parent (restart-case
                                         (progn (signal 'test-context-required)
                                                nil)
@@ -77,30 +77,40 @@
     (if (symbolp name)
         `(,name ,@arguments)
         `(funcall ,name ,@arguments)))
-  (defun call-with-function-fail-handler (function fail-function function-name arguments)
-    (handler-bind ((test-failed (lambda (condition)
-                                  (declare (ignore condition))
-                                  (funcall fail-function (format nil "(~A~{ ~S~}) is nil." function-name arguments)))))
+  (defun call-with-override-test-handler (function &key succeeded failed)
+    (handler-bind ((test-succeeded (or succeeded #'identity))
+                   (test-failed (or failed #'identity)))
       (funcall function)))
+  (defun call-with-function-test-handler (function fail-function function-name arguments)
+    (call-with-override-test-handler function
+                                     :failed (lambda (condition)
+                                               (declare (ignore condition))
+                                               (funcall fail-function (format nil "(~A~{ ~S~}) is nil." function-name arguments)))))
   (define-test-type :function (function-name &rest arguments)
     (let ((argument-variables (mapcar (lambda (argument) (if (keywordp argument) argument (gensym (princ-to-string argument))))
                                       arguments)))
       `(let ,(mapcan (lambda (variable argument) `((,variable ,argument))) argument-variables arguments)
-         (call-with-function-fail-handler (lambda () (test t ,(calling-form function-name argument-variables)))
+         (call-with-function-test-handler (lambda () (test t ,(calling-form function-name argument-variables)))
                                           #'fail ',function-name (list ,@argument-variables)))))
-  (defun call-with-resignal-handler (function success-function fail-function)
-    (handler-bind ((test-succeeded (lambda (condition)
-                                     (declare (ignore condition))
-                                     (funcall success-function)))
-                   (test-failed (lambda (condition)
-                                  (funcall fail-function (test-failed-message condition)))))
-      (funcall function)))
+  (defun call-with-resignal-test-handler (function &key success-function fail-function)
+    (call-with-override-test-handler function
+                                     :succeeded (and success-function
+                                                     (lambda (condition)
+                                                       (declare (ignore condition))
+                                                       (funcall success-function)))
+                                     :failed (and fail-function
+                                                  (lambda (condition)
+                                                    (funcall fail-function (test-failed-message condition))))))
   (defmethod test-form-expand ((type symbol) arguments)
     `(in-test (,type ,@arguments)
-              (call-with-resignal-handler (lambda () (test :function ,type ,@arguments))
-                                          #'success
-                                          #'fail)))
-
+              (call-with-resignal-test-handler (lambda () (test :function ,type ,@arguments))
+                                               :success-function #'success
+                                               :fail-function #'fail)))
+  (defmethod test-form-expand ((type string) arguments)
+    `(in-test ,type
+              (call-with-resignal-test-handler (lambda () (test ,@arguments))
+                                               :success-function #'success
+                                               :fail-function #'fail)))
   (define-macro-test-type :each (test-type &rest argument-lists)
     `(tests ,@(mapcar (lambda (arguments) (cons test-type arguments)) argument-lists)))
   (define-macro-test-type call-single (function &rest arguments)
