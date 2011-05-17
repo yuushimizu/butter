@@ -14,19 +14,15 @@
            :success-test
            :fail-test
 
+           :in-test
 	   :test-form-expand
-	   :define-test-type-without-success
-	   :with-default-success-handler
+           :define-macro-test-type
 	   :define-test-type
 	   :<-
 
-	   :test
+	   :ok
 	   :tests
 
-	   :make-test-condition-message
-	   :print-test-condition
-	   :call-with-default-test-handler
-	   
 	   :test-not-found-error
            :named-test-not-found-error
            :package-test-not-found-error
