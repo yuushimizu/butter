@@ -39,7 +39,7 @@
      (lambda () (reduce (lambda (result test-name)
                           (and (call-with-default-test-printer (lambda ()
                                                                  (when show-details (format stream "~&# ~A~%" test-name))
-                                                                 (run-test test-name package))
+                                                                 (run-test test-name))
                                                                :stream stream
                                                                :show-details show-details
                                                                :invoke-debugger invoke-debugger)

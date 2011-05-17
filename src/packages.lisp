@@ -27,7 +27,9 @@
 	   :print-test-condition
 	   :call-with-default-test-handler
 	   
-	   :no-test-found
+	   :test-not-found-error
+           :named-test-not-found-error
+           :package-test-not-found-error
 	   :test-functions
 	   :test-function
 	   :deftest
