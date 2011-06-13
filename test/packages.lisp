@@ -1,3 +1,3 @@
 (in-package :cl-user)
-(defpackage :butter-test
+(defpackage :butter.test
   (:use :common-lisp :butter))

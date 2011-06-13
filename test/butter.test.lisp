@@ -1,4 +1,4 @@
-(in-package :butter-test)
+(in-package :butter.test)
 
 (define-test-type between (min max value)
   (let ((value% (gensym)))

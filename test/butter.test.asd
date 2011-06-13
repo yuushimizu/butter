@@ -1,14 +1,14 @@
 (in-package :cl-user)
 
-(defpackage :butter-test-system
+(defpackage :butter.test.system
   (:use :cl :asdf))
-(in-package :butter-test-system)
+(in-package :butter.test.system)
 
-(defsystem butter-test
-    :name "butter-test"
+(defsystem butter.test
+    :name "butter.test"
     :author "yuushimizu"
     :version "0.0.1"
     :description "Test for butter"
     :depends-on (:butter)
     :components ((:file "packages")
-		 (:file "test-butter" :depends-on ("packages"))))
+		 (:file "butter.test" :depends-on ("packages"))))
