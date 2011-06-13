@@ -1,3 +1,7 @@
+(in-package :cl-user)
+(defpackage :butter.cui
+  (:use :common-lisp :butter)
+  (:export :begin :run))
 (in-package :butter.cui)
 (defun test-context-name-lines (context)
   (if context

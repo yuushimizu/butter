@@ -1,3 +1,6 @@
+(in-package :cl-user)
+(defpackage :butter.test
+  (:use :common-lisp :butter))
 (in-package :butter.test)
 
 (define-test-type between (min max value)

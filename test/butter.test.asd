@@ -10,5 +10,5 @@
     :version "0.0.1"
     :description "Test for butter"
     :depends-on (:butter)
-    :components ((:file "packages")
-		 (:file "butter.test" :depends-on ("packages"))))
+    :components ((:file "butter.test")))
+		 
