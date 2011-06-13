@@ -1,8 +1,8 @@
 (in-package :cl-user)
 
-(defpackage :butter-system
+(defpackage :butter.system
   (:use :cl :asdf))
-(in-package :butter-system)
+(in-package :butter.system)
 
 (defsystem butter
     :name "butter"
