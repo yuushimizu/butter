@@ -1,4 +1,4 @@
-(in-package :butter/cui)
+(in-package :butter.cui)
 (defun test-context-name-lines (context)
   (if context
       (concatenate 'string
