@@ -99,6 +99,14 @@
     (funcall #'test-form-expand (car type) (append (cdr type) arguments)))
   (defmethod test-form-expand ((type null) arguments)
     `(ok ,@arguments))
+  (defmethod test-form-expand ((type symbol) arguments)
+    (let ((argument-variables (mapcar (lambda (argument) (if (keywordp argument) argument (gensym (princ-to-string argument))))
+                                      arguments)))
+      `(in-test (,type ,@arguments)
+                (let ,(mapcan (lambda (variable argument) `((,variable ,argument))) argument-variables arguments)
+                  (if (,type ,@argument-variables)
+                      (success)
+                      (fail (format nil "(~A~{ ~S~}) is nil." ',type (list ,@argument-variables))))))))
   (defun calling-form (name arguments)
     (if (symbolp name)
         `(,name ,@arguments)
@@ -107,17 +115,6 @@
     (handler-bind ((test-succeeded (or succeeded #'identity))
                    (test-failed (or failed #'identity)))
       (funcall function)))
-  (defun call-with-function-test-handler (function fail-function function-name arguments)
-    (call-with-override-test-handler function
-                                     :failed (lambda (condition)
-                                               (declare (ignore condition))
-                                               (funcall fail-function (format nil "(~A~{ ~S~}) is nil." function-name arguments)))))
-  (define-test-type :function (function-name &rest arguments)
-    (let ((argument-variables (mapcar (lambda (argument) (if (keywordp argument) argument (gensym (princ-to-string argument))))
-                                      arguments)))
-      `(let ,(mapcan (lambda (variable argument) `((,variable ,argument))) argument-variables arguments)
-         (call-with-function-test-handler (lambda () (ok t ,(calling-form function-name argument-variables)))
-                                          #'fail ',function-name (list ,@argument-variables)))))
   (defun call-with-resignal-test-handler (function &key success-function fail-function)
     (call-with-override-test-handler function
                                      :succeeded (and success-function
@@ -127,11 +124,6 @@
                                      :failed (and fail-function
                                                   (lambda (condition)
                                                     (funcall fail-function (test-failed-message condition))))))
-  (defmethod test-form-expand ((type symbol) arguments)
-    `(in-test (,type ,@arguments)
-              (call-with-resignal-test-handler (lambda () (ok :function ,type ,@arguments))
-                                               :success-function #'success
-                                               :fail-function #'fail)))
   (defmethod test-form-expand ((type string) arguments)
     `(in-test ,type
               (call-with-resignal-test-handler (lambda () (ok ,@arguments))

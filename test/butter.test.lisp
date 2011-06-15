@@ -60,14 +60,6 @@
   (ok evenp 20)
   (ok number-in 10 30 20))
 
-(deftest function
-  (ok :function = 9 (* 3 3))
-  (ok :function string= "foobar" (concatenate 'string "foo" "bar"))
-  (ok :function < 10 20)
-  (ok :function typep 10 'integer)
-  (ok :function evenp 20)
-  (ok :function number-in 10 30 20))
-
 (deftest with-message
   (ok "add two numbers" = 30 (+ 20 10))
   (ok "append two lists" equal '(1 2 3 4) (append '(1 2) '(3 4)))
