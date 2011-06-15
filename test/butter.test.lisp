@@ -79,64 +79,63 @@
   (ok :type (or integer list) '(a b c)))
 
 (deftest each
-  (ok :each ()
-      (eql 15 (+ 4 5 6))
-      (string= "foobar" (concatenate 'string "foo" "bar")))
-  (ok :each eql
-      (10 (+ 4 6))
-      ('x 'x))
-  (ok :each (eql 20)
-      ((+ 14 6))
-      ((* 2 10)))
-  (ok :each :type
-      (integer (+ 12 6))
-      (string "foo"))
-  (ok :each (:type integer)
-      (30)
-      (42))
-  (ok :each eql))
+  (ok-each ()
+           (eql 15 (+ 4 5 6))
+           (string= "foobar" (concatenate 'string "foo" "bar")))
+  (ok-each eql
+           (10 (+ 4 6))
+           ('x 'x))
+  (ok-each (eql 20)
+           ((+ 14 6))
+           ((* 2 10)))
+  (ok-each :type
+           (integer (+ 12 6))
+           (string "foo"))
+  (ok-each (:type integer)
+           (30)
+           (42))
+  (ok-each eql))
 
 (deftest tests
   (tests (eql 15 (+ 4 5 6))
-	 (:type integer 13)
-	 (:each eql
-		(10 (* 2 5))
-		(5 (- 6 1)))))
+         (eql 10 (* 2 5))
+         (eql 5 (- 6 1))
+	 (:type integer 13)))
 
 (defun 2* (n) (* n 2))
 
 (deftest call
-  (ok :call 1+ ()
-      (eql 3 <- 2)
-      (< 4 <- 4))
-  (ok :call 2* eql
-      (10 <- 5)
-      (20 <- 10)
-      (30 <- 15))
-  (ok :call - (> 10)
-      (<- 12 8)
-      (<- 16 10))
-  (ok :call (lambda (n) (* n 10)) eql
-      (100 <- 10))
-  (ok :call (lambda (x y) (* x y)) =
-      (27 <- 3 9)
-      (56 <- 7 8))
-  (ok :call (lambda () 30) (eql 30)
-      ())
-  (ok :call (constantly 40) eql
-      (40))
-  (ok :call (constantly 40) eql
-      (40 <-))
-  (ok :call (constantly 40) (eql 40)
-      ())
-  (ok :call (constantly 40) (eql 40)
-      (<-))
-  (ok :call 2* eql))
+  (ok-call 1+ ()
+           (eql 3 <- 2)
+           (< 4 <- 4))
+  (ok-call 2* eql
+           (10 <- 5)
+           (20 <- 10)
+           (30 <- 15))
+  (ok-call - (> 10)
+           (<- 12 8)
+           (<- 16 10))
+  (ok-call (lambda (n) (* n 10)) eql
+           (100 <- 10))
+  (ok-call (lambda (x y) (* x y)) =
+           (27 <- 3 9)
+           (56 <- 7 8))
+  (ok-call (lambda () 30) (eql 30)
+           ())
+  (ok-call (constantly 40) eql
+           (40))
+  (ok-call (constantly 40) eql
+           (40 <-))
+  (ok-call (constantly 40) (eql 40)
+           ())
+  (ok-call (constantly 40) (eql 40)
+           (<-))
+  (ok-call 2* eql))
 
 (deftest define-test-type
   (ok between 10 20 13)
   (ok (between -30) 0 -24)
-  (ok (:each (between 5 9)
-             (7)
-             (6)
-             (9))))
+  (ok-each (between 5 9)
+           (7)
+           (6)
+           (9)))

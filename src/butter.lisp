@@ -16,12 +16,13 @@
 
            :in-test
 	   :test-form-expand
-           :define-macro-test-type
 	   :define-test-type
 	   :<-
 
 	   :ok
 	   :tests
+           :ok-each
+           :ok-call
 
 	   :test-not-found-error
            :named-test-not-found-error
@@ -80,13 +81,6 @@
            ,@body))))
   
   (defgeneric test-form-expand (type arguments))
-  (defmacro define-macro-test-type (type (&rest lambda-list) &body body)
-    (with-gensyms (type% arguments%)
-      `(eval-when (:compile-toplevel :load-toplevel :execute)
-         (defmethod test-form-expand ((,type% (eql ',type)) ,arguments%)
-           (declare (ignore ,type%))
-           (destructuring-bind ,lambda-list ,arguments% ,@body))
-         ',type)))
   (defmacro define-test-type (type (&rest lambda-list) &body body)
     (with-gensyms (type% arguments%)
       `(eval-when (:compile-toplevel :load-toplevel :execute)
@@ -104,7 +98,7 @@
     `(unless ,expression (fail ,(format nil "~S is nil." expression))))
   (defmethod test-form-expand ((type cons) arguments)
     (funcall #'test-form-expand (car type) (append (cdr type) arguments)))
-  (define-macro-test-type nil (&rest arguments)
+  (defmethod test-form-expand ((type null) arguments)
     `(ok ,@arguments))
   (defun calling-form (name arguments)
     (if (symbolp name)
@@ -144,17 +138,18 @@
               (call-with-resignal-test-handler (lambda () (ok ,@arguments))
                                                :success-function #'success
                                                :fail-function #'fail)))
-  (define-macro-test-type :each (test-type &rest argument-lists)
+  (defmacro ok-each (test-type &rest argument-lists)
     `(tests ,@(mapcar (lambda (arguments) (cons test-type arguments)) argument-lists)))
-  (define-macro-test-type call-single (function &rest arguments)
-    (labels ((split-arguments (&optional (rest arguments) (left ()))
+  (defmacro ok-call (function test-type &rest argument-lists)
+    (labels ((split-arguments (rest &optional (left ()))
                (if (or (not rest) (eq '<- (car rest)))
                    (values (reverse left) (cdr rest))
                    (split-arguments (cdr rest) (cons (car rest) left)))))
-      (multiple-value-bind (test-arguments function-arguments) (split-arguments arguments)
-        `(ok ,@test-arguments ,(calling-form function function-arguments)))))
-  (define-macro-test-type :call (function test-type &rest argument-lists)
-    `(ok :each (call-single ,function ,test-type) ,@argument-lists))
+      `(tests ,@(mapcar (lambda (arguments)
+                          (multiple-value-bind (test-arguments function-arguments) (split-arguments arguments)
+                            `(,test-type ,@test-arguments ,(calling-form function function-arguments))))
+                        argument-lists))))
+
   (define-test-type :type (type value) `(ok typep ,value ',type))
   (define-test-type :condition (condition-type &body body)
     `(handler-case (progn ,@body (fail ,(format nil "An expected condition ~A was not signalled." condition-type)))
