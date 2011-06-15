@@ -107,21 +107,6 @@
   (ok-call - (> 10)
            (<- 12 8)
            (<- 16 10))
-  (ok-call (lambda (n) (* n 10)) eql
-           (100 <- 10))
-  (ok-call (lambda (x y) (* x y)) =
-           (27 <- 3 9)
-           (56 <- 7 8))
-  (ok-call (lambda () 30) (eql 30)
-           ())
-  (ok-call (constantly 40) eql
-           (40))
-  (ok-call (constantly 40) eql
-           (40 <-))
-  (ok-call (constantly 40) (eql 40)
-           ())
-  (ok-call (constantly 40) (eql 40)
-           (<-))
   (ok-call 2* eql))
 
 (deftest define-test-type
