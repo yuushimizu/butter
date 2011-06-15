@@ -133,12 +133,6 @@
       (<-))
   (ok :call 2* eql))
 
-(deftest macro
-  (ok :macro (n m) `(= 10 (+ ,n ,m))
-      (2 8)
-      (4 (+ 3 3))
-      ((+ 2 3) (+ 1 4))))
-
 (deftest define-test-type
   (ok between 10 20 13)
   (ok (between -30) 0 -24)
