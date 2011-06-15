@@ -9,5 +9,6 @@
     :author "yuushimizu"
     :version "0.0.1"
     :description "An unit testing frame"
-    :components ((:file "butter")
+    :components ((:file "util")
+                 (:file "butter" :depends-on ("util"))
                  (:file "butter.cui" :depends-on ("butter"))))

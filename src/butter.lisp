@@ -1,6 +1,6 @@
 (in-package :cl-user)
 (defpackage :butter
-  (:use :common-lisp)
+  (:use :cl :butter.util)
   (:export :test-context
            :test-context-name
            :test-context-parent
@@ -33,9 +33,8 @@
 	   :run-test
 	   :test-names))
 (in-package :butter)
+
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (defmacro with-gensyms ((&rest vars) &rest body)
-    `(let ,(loop for var in vars collect `(,var (gensym ,(princ-to-string var)))) ,@body))
   (defclass test-context ()
     ((name :initarg :name :reader test-context-name)
      (parent :initarg :parent :initform nil :reader test-context-parent)))
