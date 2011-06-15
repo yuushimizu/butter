@@ -11,4 +11,4 @@
     :description "An unit testing frame"
     :components ((:file "util")
                  (:file "butter" :depends-on ("util"))
-                 (:file "butter.cui" :depends-on ("butter"))))
+                 (:file "cui" :depends-on ("butter"))))
