@@ -9,7 +9,6 @@
 	   :test-succeeded
 	   :test-failed
 	   :test-failed-message
-           :test-condition-succeeded-p
 
            :success-test
            :fail-test
@@ -46,9 +45,6 @@
     ((message :initarg :message :reader test-failed-message))
     (:report (lambda (condition stream)
                (format stream "The test ~A was failed with the message ~S." (test-context-name (test-condition-context condition)) (test-failed-message condition)))))
-  (defgeneric test-condition-succeeded-p (condition)
-    (:method (condition) nil)
-    (:method ((condition test-succeeded)) t))
 
   (define-condition test-context-required (condition) ())
   (defun call-with-test-restarts (name function)
