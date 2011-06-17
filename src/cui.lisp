@@ -16,10 +16,10 @@
       (values (funcall function) succeeded failed))))
 (defun call-with-default-test-printer (function &key (stream *standard-output*) (show-details nil) (invoke-debugger nil))
   (handler-bind ((test-succeeded (lambda (condition)
-                                   (let ((*print-pretty*))
+                                   (let ((*print-pretty* nil))
                                      (when show-details (format stream "~&ok - ~A~%" (test-context-name (test-condition-context condition)))))))
                  (test-failed (lambda (condition)
-                                (let ((*print-pretty*))
+                                (let ((*print-pretty* nil))
                                   (format stream "~&not ok - ~A~%#  ~A~%~A"
                                           (test-context-name (test-condition-context condition))
                                           (test-failed-message condition)
@@ -27,7 +27,7 @@
                  (error (lambda (condition)
                           (if invoke-debugger
                               (invoke-debugger condition)
-                              (let ((*print-pretty*))
+                              (let ((*print-pretty* nil))
                                 (invoke-restart 'fail-test (format nil "The error ~S was occurred with the message \"~A\"." condition condition)))))))
     (funcall function)))
 (defmacro begin (&body form)
