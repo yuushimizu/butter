@@ -6,11 +6,11 @@
            :test-context-parent
            :test-condition
            :test-condition-context
-	   :test-succeeded
+	   :test-passed
 	   :test-failed
 	   :test-failed-message
 
-           :success-test
+           :pass-test
            :fail-test
            :ignore-test
 
@@ -41,7 +41,7 @@
      (parent :initarg :parent :initform nil :reader test-context-parent)))
   (define-condition test-condition (condition)
     ((context :initarg :context :reader test-condition-context)))
-  (define-condition test-succeeded (test-condition) ())
+  (define-condition test-passed (test-condition) ())
   (define-condition test-failed (test-condition)
     ((message :initarg :message :reader test-failed-message))
     (:report (lambda (condition stream)
@@ -60,40 +60,40 @@
                                                       (declare (ignore condition))
                                                       (invoke-restart 'continue-with-context current-context))))
                 (funcall function))
-            (success-test ()
-              (signal 'test-succeeded :context current-context)
+            (pass-test ()
+              (signal 'test-passed :context current-context)
               t)
             (fail-test (&optional (message ""))
               (signal (make-condition 'test-failed :context current-context :message message))
               nil))
         (ignore-test () nil))))
   (defmacro with-test-result-functions (&body body)
-    `(flet ((success () (invoke-restart 'success-test))
+    `(flet ((pass () (invoke-restart 'pass-test))
             (fail (message) (invoke-restart 'fail-test message)))
-       (declare (ignorable (function success) (function fail)))
+       (declare (ignorable (function pass) (function fail)))
        ,@body))
   (defmacro in-test-context (name &body body)
     `(call-with-test-restarts ',name (lambda () (with-test-result-functions ,@body))))
-  (defun call-with-test-result-handlers (function &key succeeded failed)
-    (handler-bind ((test-succeeded (or succeeded #'identity))
+  (defun call-with-test-result-handlers (function &key passed failed)
+    (handler-bind ((test-passed (or passed #'identity))
                    (test-failed (or failed #'identity)))
       (funcall function)))
-  (defmacro with-test-result-handlers (form &rest handlers &key succeeded failed)
-    (declare (ignore succeeded failed))
+  (defmacro with-test-result-handlers (form &rest handlers &key passed failed)
+    (declare (ignore passed failed))
     `(call-with-test-result-handlers (lambda () ,form)
                                         ,@handlers))
   (defun call-with-assertion-handlers (function)
     (with-test-result-handlers
         (funcall function)
-      :succeeded (lambda (condition)
-                   (declare (ignore condition))
-                   (invoke-restart 'ignore-test))
+      :passed (lambda (condition)
+                (declare (ignore condition))
+                (invoke-restart 'ignore-test))
       :failed (lambda (condition)
                 (invoke-restart 'fail-test (test-failed-message condition)))))
   (defmacro with-assertion-handlers (&body body)
     `(call-with-assertion-handlers (lambda () ,@body)))
   (defmacro in-assertion-context (name &body body)
-    `(in-test-context ,name (with-assertion-handlers ,@body) (success)))
+    `(in-test-context ,name (with-assertion-handlers ,@body) (pass)))
 
   (defgeneric assertion-form-expand (assertion-type arguments))
   (defmacro define-standard-assertion-form-expand ((type-variable type-specializer) (&rest arguments-lambda-list) &body body)
