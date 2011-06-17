@@ -21,7 +21,6 @@
 	   :define-assertion-type
 
 	   :ok
-	   :tests
            :ok-each
            :ok-call
            :<-
@@ -111,8 +110,6 @@
       `(define-standard-assertion-form-expand (,type% (eql ',type)) ,lambda-list ,@body)))
   (defmacro ok (type &rest arguments)
     (assertion-form-expand type arguments))
-  (defmacro tests (&rest argument-lists)
-    `(progn ,@(mapcar (lambda (arguments) `(ok ,@arguments)) argument-lists)))
   
   (define-assertion-type t (expression)
     `(unless ,expression (fail ,(format nil "~S is nil." expression))))

@@ -88,12 +88,6 @@
            (42))
   (ok-each eql))
 
-(deftest tests
-  (tests (eql 15 (+ 4 5 6))
-         (eql 10 (* 2 5))
-         (eql 5 (- 6 1))
-	 (:type integer 13)))
-
 (defun 2* (n) (* n 2))
 
 (deftest ok-call
