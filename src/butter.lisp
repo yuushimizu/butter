@@ -12,6 +12,7 @@
 
            :success-test
            :fail-test
+           :ignore-test
 
            :in-test-context
            :with-test-result-handlers
