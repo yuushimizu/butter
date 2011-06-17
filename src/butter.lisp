@@ -14,15 +14,17 @@
            :success-test
            :fail-test
 
-           :in-test
-	   :test-form-expand
-	   :define-test-type
-	   :<-
+           :in-test-context
+           :with-test-result-handlers
+           :in-assertion-context
+	   :assertion-form-expand
+	   :define-assertion-type
 
 	   :ok
 	   :tests
            :ok-each
            :ok-call
+           :<-
 
 	   :test-not-found-error
            :named-test-not-found-error
@@ -50,95 +52,100 @@
     (:method ((condition test-succeeded)) t))
 
   (define-condition test-context-required (condition) ())
-  (defun call-with-test-handler (test-name function)
-    (flet ((make-context ()
-             (make-instance 'test-context
-                            :name (princ-to-string test-name)
-                            :parent (restart-case
-                                        (progn (signal 'test-context-required)
-                                               nil)
-                                      (continue-with-context (context) context)))))
+  (defun call-with-test-restarts (name function)
+    (let* ((parent-context (restart-case
+                               (progn (signal 'test-context-required)
+                                      nil)
+                             (continue-with-context (context) context)))
+           (current-context (make-instance 'test-context :name name :parent parent-context)))
       (restart-case
-          (handler-bind ((test-context-required (lambda (condition)
-                                                  (declare (ignore condition))
-                                                  (invoke-restart 'continue-with-context (make-context)))))
-            (funcall function))
-        (success-test ()
-          (signal 'test-succeeded :context (make-context))
-          nil)
-        (fail-test (&optional (message ""))
-          (signal (make-condition 'test-failed :context (make-context) :message message))
-          nil))))
-  (defmacro with-test-handler (test-name &body body)
-    `(call-with-test-handler ',test-name (lambda () ,@body)))
-  (defmacro in-test (test-name &body body)
-    (with-gensyms (message%)
-      `(with-test-handler ,test-name
-         (flet ((success () (invoke-restart 'success-test))
-                (fail (,message%) (invoke-restart 'fail-test ,message%)))
-           (declare (ignorable (function success) (function fail)))
-           ,@body))))
-  
-  (defgeneric test-form-expand (type arguments))
-  (defmacro define-test-type (type (&rest lambda-list) &body body)
-    (with-gensyms (type% arguments%)
-      `(eval-when (:compile-toplevel :load-toplevel :execute)
-         (defmethod test-form-expand ((,type% (eql ',type)) ,arguments%)
-           (destructuring-bind ,lambda-list ,arguments%
-             `(in-test (,,type% ,@,arguments%)
-                       ,,@body
-                       (success)))))))
-  (defmacro ok (type &rest arguments)
-    (test-form-expand type arguments))
-  (defmacro tests (&rest argument-lists)
-    `(progn ,@(mapcar (lambda (arguments) `(ok ,@arguments)) argument-lists)))
-  
-  (define-test-type t (expression)
-    `(unless ,expression (fail ,(format nil "~S is nil." expression))))
-  (defmethod test-form-expand ((type cons) arguments)
-    (funcall #'test-form-expand (car type) (append (cdr type) arguments)))
-  (defmethod test-form-expand ((type null) arguments)
-    `(ok ,@arguments))
-  (defmethod test-form-expand ((type symbol) arguments)
-    (let ((argument-variables (mapcar (lambda (argument) (if (keywordp argument) argument (gensym (princ-to-string argument))))
-                                      arguments)))
-      `(in-test (,type ,@arguments)
-                (let ,(mapcan (lambda (variable argument) `((,variable ,argument))) argument-variables arguments)
-                  (if (,type ,@argument-variables)
-                      (success)
-                      (fail (format nil "(~A~{ ~S~}) is nil." ',type (list ,@argument-variables))))))))
-  (defun call-with-override-test-handler (function &key succeeded failed)
+          (restart-case
+              (handler-bind ((test-context-required (lambda (condition)
+                                                      (declare (ignore condition))
+                                                      (invoke-restart 'continue-with-context current-context))))
+                (funcall function))
+            (success-test ()
+              (signal 'test-succeeded :context current-context)
+              t)
+            (fail-test (&optional (message ""))
+              (signal (make-condition 'test-failed :context current-context :message message))
+              nil))
+        (ignore-test () nil))))
+  (defmacro with-test-result-functions (&body body)
+    `(flet ((success () (invoke-restart 'success-test))
+            (fail (message) (invoke-restart 'fail-test message)))
+       (declare (ignorable (function success) (function fail)))
+       ,@body))
+  (defmacro in-test-context (name &body body)
+    `(call-with-test-restarts ',name (lambda () (with-test-result-functions ,@body))))
+  (defun call-with-test-result-handlers (function &key succeeded failed)
     (handler-bind ((test-succeeded (or succeeded #'identity))
                    (test-failed (or failed #'identity)))
       (funcall function)))
-  (defun call-with-resignal-test-handler (function &key success-function fail-function)
-    (call-with-override-test-handler function
-                                     :succeeded (and success-function
-                                                     (lambda (condition)
-                                                       (declare (ignore condition))
-                                                       (funcall success-function)))
-                                     :failed (and fail-function
-                                                  (lambda (condition)
-                                                    (funcall fail-function (test-failed-message condition))))))
-  (defmethod test-form-expand ((type string) arguments)
-    `(in-test ,type
-              (call-with-resignal-test-handler (lambda () (ok ,@arguments))
-                                               :success-function #'success
-                                               :fail-function #'fail)))
-  (defmacro ok-each (test-type &rest argument-lists)
-    `(tests ,@(mapcar (lambda (arguments) (cons test-type arguments)) argument-lists)))
-  (defmacro ok-call (function test-type &rest argument-lists)
+  (defmacro with-test-result-handlers (form &rest handlers &key succeeded failed)
+    (declare (ignore succeeded failed))
+    `(call-with-test-result-handlers (lambda () ,form)
+                                        ,@handlers))
+  (defun call-with-assertion-handlers (function)
+    (with-test-result-handlers
+        (funcall function)
+      :succeeded (lambda (condition)
+                   (declare (ignore condition))
+                   (invoke-restart 'ignore-test))
+      :failed (lambda (condition)
+                (invoke-restart 'fail-test (test-failed-message condition)))))
+  (defmacro with-assertion-handlers (&body body)
+    `(call-with-assertion-handlers (lambda () ,@body)))
+  (defmacro in-assertion-context (name &body body)
+    `(in-test-context ,name (with-assertion-handlers ,@body) (success)))
+
+  (defgeneric assertion-form-expand (assertion-type arguments))
+  (defmacro define-standard-assertion-form-expand ((type-variable type-specializer) (&rest arguments-lambda-list) &body body)
+    (with-gensyms (arguments%)
+      `(eval-when (:compile-toplevel :load-toplevel :execute)
+         (defmethod assertion-form-expand ((,type-variable ,type-specializer) ,arguments%)
+           (destructuring-bind ,arguments-lambda-list ,arguments%
+             `(in-assertion-context (,,type-variable ,@,arguments%) ,,@body))))))
+  (defmacro define-assertion-type (type (&rest lambda-list) &body body)
+    (with-gensyms (type%)
+      `(define-standard-assertion-form-expand (,type% (eql ',type)) ,lambda-list ,@body)))
+  (defmacro ok (type &rest arguments)
+    (assertion-form-expand type arguments))
+  (defmacro tests (&rest argument-lists)
+    `(progn ,@(mapcar (lambda (arguments) `(ok ,@arguments)) argument-lists)))
+  
+  (define-assertion-type t (expression)
+    `(unless ,expression (fail ,(format nil "~S is nil." expression))))
+  (define-standard-assertion-form-expand (type cons) (&rest arguments)
+    `(ok ,@type ,@arguments))
+  (define-standard-assertion-form-expand (type null) (&rest arguments)
+    `(ok ,@arguments))
+  (define-standard-assertion-form-expand (function symbol) (&rest arguments)
+    (let ((argument-variables (mapcar (lambda (argument) (if (keywordp argument) argument (gensym (princ-to-string argument))))
+                                      arguments)))
+      `(let ,(mapcan (lambda (variable argument) `((,variable ,argument))) argument-variables arguments)
+         (with-test-result-handlers (ok t (,function ,@argument-variables))
+           :failed (lambda (condition)
+                     (declare (ignore condition))
+                     (fail (format nil "(~A~{ ~S~}) is nil." ',function (list ,@argument-variables))))))))
+  (defmethod assertion-form-expand ((name string) arguments)
+    `(in-assertion-context ,(format nil "~A: ~S" name arguments)
+                           (ok ,@arguments)))
+  (defmacro ok-each (assertion-type &rest argument-lists)
+    `(progn ,@(mapcar (lambda (arguments) `(ok ,@(cons-or-append assertion-type arguments)))
+                      argument-lists)))
+  (defmacro ok-call (function assertion-type &rest argument-lists)
     (labels ((split-arguments (rest &optional (left ()))
                (if (or (not rest) (eq '<- (car rest)))
                    (values (reverse left) (cdr rest))
                    (split-arguments (cdr rest) (cons (car rest) left)))))
-      `(tests ,@(mapcar (lambda (arguments)
-                          (multiple-value-bind (test-arguments function-arguments) (split-arguments arguments)
-                            `(,test-type ,@test-arguments (,function ,@function-arguments))))
+      `(progn ,@(mapcar (lambda (arguments)
+                          (multiple-value-bind (assertion-arguments function-arguments) (split-arguments arguments)
+                            `(ok ,@(cons-or-append assertion-type assertion-arguments)
+                                 (,function ,@function-arguments))))
                         argument-lists))))
-
-  (define-test-type :type (type value) `(ok typep ,value ',type))
-  (define-test-type :condition (condition-type &body body)
+  (define-assertion-type :type (type value) `(ok typep ,value ',type))
+  (define-assertion-type :condition (condition-type &body body)
     `(handler-case (progn ,@body (fail ,(format nil "An expected condition ~A was not signalled." condition-type)))
        (,condition-type ())))
   
@@ -164,7 +171,7 @@
         (setf (gethash name test-functions) function))))
   (defmacro deftest (name &body body)
     `(progn
-       (setf (test-function ',name *package*) (lambda () (in-test ,name ,@body)))
+       (setf (test-function ',name *package*) (lambda () (in-test-context ,name ,@body)))
        ',name))
   (defun run-test (name package)
     (funcall (test-function name package)))

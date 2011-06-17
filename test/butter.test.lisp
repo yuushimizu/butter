@@ -3,7 +3,7 @@
   (:use :common-lisp :butter))
 (in-package :butter.test)
 
-(define-test-type between (min max value)
+(define-assertion-type between (min max value)
   (let ((value% (gensym)))
     `(let ((,value% ,value))
        (ok and (<= ,min ,value%) (<= ,value% ,max)))))
@@ -70,7 +70,7 @@
   (ok :type string "foo")
   (ok :type (or integer list) '(a b c)))
 
-(deftest each
+(deftest ok-each
   (ok-each ()
            (eql 15 (+ 4 5 6))
            (string= "foobar" (concatenate 'string "foo" "bar")))
@@ -96,7 +96,7 @@
 
 (defun 2* (n) (* n 2))
 
-(deftest call
+(deftest ok-call
   (ok-call 1+ ()
            (eql 3 <- 2)
            (< 4 <- 4))
@@ -109,7 +109,7 @@
            (<- 16 10))
   (ok-call 2* eql))
 
-(deftest define-test-type
+(deftest define-assertion-type
   (ok between 10 20 13)
   (ok (between -30) 0 -24)
   (ok-each (between 5 9)
