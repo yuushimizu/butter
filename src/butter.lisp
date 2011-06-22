@@ -14,6 +14,9 @@
            :fail-test
            :ignore-test
 
+           :pass
+           :fail
+
            :in-test-context
            :with-test-result-handlers
            :in-assertion-context
