@@ -51,25 +51,29 @@
                (format stream "The test ~A was failed with the message ~S." (test-context-name (test-condition-context condition)) (test-failed-message condition)))))
 
   (define-condition test-context-required (condition) ())
-  (defun call-with-test-restarts (name function)
+  (defun call-with-test-context (name function)
     (let* ((parent-context (restart-case
                                (progn (signal 'test-context-required)
                                       nil)
                              (continue-with-context (context) context)))
            (current-context (make-instance 'test-context :name name :parent parent-context)))
-      (restart-case
-          (restart-case
-              (handler-bind ((test-context-required (lambda (condition)
-                                                      (declare (ignore condition))
-                                                      (invoke-restart 'continue-with-context current-context))))
-                (funcall function))
-            (pass-test ()
-              (signal 'test-passed :context current-context)
-              t)
-            (fail-test (&optional (message ""))
-              (signal (make-condition 'test-failed :context current-context :message message))
-              nil))
-        (ignore-test () nil))))
+      (handler-bind ((test-context-required (lambda (condition)
+                                              (declare (ignore condition))
+                                              (invoke-restart 'continue-with-context current-context))))
+        (funcall function current-context))))
+  (defun call-with-test-restarts (name function)
+    (call-with-test-context name
+                            (lambda (context)
+                              (restart-case
+                                  (restart-case
+                                      (funcall function)
+                                    (pass-test ()
+                                      (signal 'test-passed :context context)
+                                      t)
+                                    (fail-test (&optional (message ""))
+                                      (signal (make-condition 'test-failed :context context :message message))
+                                      nil))
+                                (ignore-test () nil)))))
   (defun pass ()
     (invoke-restart 'pass-test))
   (defun fail (message)
