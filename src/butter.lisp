@@ -123,7 +123,10 @@
   (define-standard-assertion-form-expand (function symbol) (&rest arguments)
     (let ((argument-variables (mapcar (lambda (argument) (if (keywordp argument) argument (gensym (princ-to-string argument))))
                                       arguments)))
-      `(let ,(mapcan (lambda (variable argument) `((,variable ,argument))) argument-variables arguments)
+      `(let ,(mapcan (lambda (variable argument)
+                       (if (keywordp argument) () `((,variable ,argument))))
+                     argument-variables
+                     arguments)
          (with-test-result-handlers (ok t (,function ,@argument-variables))
            :failed (lambda (condition)
                      (declare (ignore condition))

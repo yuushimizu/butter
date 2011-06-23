@@ -58,6 +58,7 @@
   (ok < 10 20)
   (ok typep 10 'integer)
   (ok evenp 20)
+  (ok find 30 '(1 2 3 4 5) :key (lambda (n) (* 10 n)))
   (ok number-in 10 30 20))
 
 (deftest with-message
