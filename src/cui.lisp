@@ -10,6 +10,7 @@
                 :signalled-conditions
                 :subresults
                 :assertion
+                :message
                 :expected
                 :assertion-result
                 :assertion-passed
@@ -75,18 +76,19 @@
 (defun print-signalled-conditions (stream result)
   (when (signalled-conditions result)
     (format stream "~&signalled conditions:~%~{  ~S: ~:*~A~%~}" (signalled-conditions result))))
+(defun print-assertion-result (stream type result with-actual-p)
+  (format stream "~%~&~A in ~A~%~:[~; message: ~:*~A~%~]expected: ~S~%"
+          type
+          (result-context-string result)
+          (message (target result))
+          (expected (target result)))
+  (when with-actual-p (format stream "  actual: ~A~%" (expression-string (actual result))))
+  (print-signalled-conditions stream result))
 (defmethod print-result (reporter (result assertion-passed))
   (when (cui-reporter-verbose reporter)
-    (format (cui-reporter-stream reporter) "~%~&PASS in ~A~%expected: ~S~%"
-            (result-context-string result)
-            (expected (target result)))
-    (print-signalled-conditions (cui-reporter-stream reporter) result)))
+    (print-assertion-result (cui-reporter-stream reporter) "PASS" result nil)))
 (defmethod print-result (reporter (result assertion-failed))
-  (format (cui-reporter-stream reporter) "~%~&FAIL in ~A~%expected: ~S~%  actual: ~A~%"
-          (result-context-string result)
-          (expected (target result))
-          (expression-string (actual result)))
-  (print-signalled-conditions (cui-reporter-stream reporter) result))
+  (print-assertion-result (cui-reporter-stream reporter) "FAIL" result t))
 (defmethod run-test :before ((test test-case) (reporter cui-reporter) &rest options)
   (declare (ignore options))
   (when (cui-reporter-verbose reporter)
