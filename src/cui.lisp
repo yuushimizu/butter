@@ -1,52 +1,130 @@
-(in-package :cl-user)
-(defpackage :butter.cui
-  (:use :common-lisp :butter)
-  (:export :begin :run))
-(in-package :butter.cui)
-(defun test-context-name-lines (context)
-  (if context
-      (concatenate 'string
-                   (format nil "~&#  in ~A~%" (test-context-name context))
-                   (test-context-name-lines (test-context-parent context)))
-      nil))
-(defun call-with-test-counter (function)
-  (let ((passed 0) (failed 0))
-    (handler-bind ((test-passed (lambda (condition) (declare (ignore condition)) (incf passed)))
-		   (test-failed (lambda (condition) (declare (ignore condition)) (incf failed))))
-      (values (funcall function) passed failed))))
-(defun call-with-default-test-printer (function &key (stream *standard-output*) (show-details nil) (invoke-debugger nil))
-  (handler-bind ((test-passed (lambda (condition)
-                                (let ((*print-pretty* nil))
-                                  (when show-details (format stream "~&ok - ~A~%" (test-context-name (test-condition-context condition)))))))
-                 (test-failed (lambda (condition)
-                                (let ((*print-pretty* nil))
-                                  (format stream "~&not ok - ~A~%#  ~A~%~A"
-                                          (test-context-name (test-condition-context condition))
-                                          (test-failed-message condition)
-                                          (test-context-name-lines (test-condition-context condition))))))
-                 (error (lambda (condition)
-                          (if invoke-debugger
-                              (invoke-debugger condition)
-                              (let ((*print-pretty* nil))
-                                (invoke-restart 'fail-test (format nil "The error ~S was occurred with the message \"~A\"." condition condition)))))))
-    (funcall function)))
-(defmacro begin (&body form)
-  `(call-with-default-test-printer (lambda () ,@form) :show-details t :invoke-debugger nil))
-(defun call-with-default-suite-printer (function &optional (stream *standard-output*))
-  (multiple-value-bind (result passed failed)
-      (call-with-test-counter function)
-    (format stream "~&# Failed ~A/~A tests.~%" failed (+ passed failed))
+(butter.util:namespace :butter.cui
+  (:use :cl)
+  (:import-from :butter.util
+                :plist-merge)
+  (:import-from :butter.extending
+                :run-test
+                :parent-tests
+                :name
+                :target
+                :signalled-conditions
+                :subresults
+                :assertion
+                :expected
+                :assertion-result
+                :assertion-passed
+                :assertion-failed
+                :actual
+                :fail
+                :test-case
+                :test-case-result
+                :test-case-aborted
+                :cause
+                :abort-test-case
+                :test-suite
+                :test-suite-result)
+  (:export :cui-reporter))
+
+(defclass cui-reporter ()
+  ((stream :initarg :stream :initform *standard-output* :reader cui-reporter-stream)
+   (verbose :initarg :verbose :initform nil :reader cui-reporter-verbose)
+   (invoke-debugger :initarg :invoke-debugger :initform nil :reader cui-reporter-invoke-debugger)))
+(defgeneric print-result (reporter result)
+  (:method (reporter result)
+    (declare (ignore reporter result))
+    nil))
+(defmethod run-test (test (reporter cui-reporter) &rest options)
+  (declare (ignore test options))
+  (let ((result (call-next-method)))
+    (print-result reporter result)
     result))
-(defun run (package &key (stream *standard-output*) (show-details nil) (invoke-debugger nil))
-  (let ((*package* (find-package package)))
-    (call-with-default-suite-printer
-     (lambda () (reduce (lambda (result test-name)
-                          (and (call-with-default-test-printer (lambda ()
-                                                                 (when show-details (format stream "~&# ~A~%" test-name))
-                                                                 (run-test test-name *package*))
-                                                               :stream stream
-                                                               :show-details show-details
-                                                               :invoke-debugger invoke-debugger)
-                               result))
-                        (test-names package)
-                        :initial-value t)))))
+(defgeneric default-debugger-hook (test)
+  (:method (test)
+    (declare (ignore test))
+    nil)
+  (:method ((test assertion))
+    (declare (ignore test))
+    #'fail)
+  (:method ((test test-case))
+    (declare (ignore test))
+    (lambda (condition)
+      (invoke-restart 'abort-test-case condition))))
+(defmethod run-test :around (test (reporter cui-reporter) &rest options)
+  (declare (ignore options))
+  (let ((*debugger-hook* (if (cui-reporter-invoke-debugger reporter)
+                             *debugger-hook*
+                             (lambda (condition hook)
+                               (declare (ignore hook))
+                               (let ((default-hook (default-debugger-hook test)))
+                                 (when default-hook (funcall default-hook condition)))))))
+    (call-next-method)))
+(defun result-context-string (result)
+  (let ((parent-tests (parent-tests result)))
+    (if (null parent-tests)
+        "TOP LEVEL"
+        (labels ((parents-to-string (&optional (rest parent-tests))
+                   (if (cdr rest)
+                       (format nil "~A~%  in ~A" (name (car rest)) (parents-to-string (cdr rest)))
+                       (princ-to-string (name (car rest))))))
+          (parents-to-string)))))
+(defgeneric expression-string (value)
+  (:method (value)
+    (princ-to-string value))
+  (:method ((value condition))
+    (format nil "~S: ~:*~A" value)))
+(defun print-signalled-conditions (stream result)
+  (when (signalled-conditions result)
+    (format stream "~&signalled conditions:~%~{  ~S: ~:*~A~%~}" (signalled-conditions result))))
+(defmethod print-result (reporter (result assertion-passed))
+  (when (cui-reporter-verbose reporter)
+    (format (cui-reporter-stream reporter) "~%~&PASS in ~A~%expected: ~S~%"
+            (result-context-string result)
+            (expected (target result)))
+    (print-signalled-conditions (cui-reporter-stream reporter) result)))
+(defmethod print-result (reporter (result assertion-failed))
+  (format (cui-reporter-stream reporter) "~%~&FAIL in ~A~%expected: ~S~%  actual: ~A~%"
+          (result-context-string result)
+          (expected (target result))
+          (expression-string (actual result)))
+  (print-signalled-conditions (cui-reporter-stream reporter) result))
+(defmethod run-test :before ((test test-case) (reporter cui-reporter) &rest options)
+  (declare (ignore options))
+  (when (cui-reporter-verbose reporter)
+    (format (cui-reporter-stream reporter) "~%~&Testing ~A.~%" (name test))))
+(defmethod print-result (reporter (result test-case-aborted))
+  (format (cui-reporter-stream reporter) "~%~&ABORT ~A~%cause: ~A~%"
+          (name (target result))
+          (expression-string (cause result))))
+(defun empty-result-count ()
+  `(:assertions 0 :failed-assertions 0 :test-cases 0 :aborted-test-cases 0))
+(defun merge-result-counts (&rest result-counts)
+  (reduce (lambda (result count)
+            (plist-merge #'+ result count))
+          result-counts
+          :initial-value (empty-result-count)))
+(define-method-combination merge-result-counts :operator merge-result-counts)
+(defgeneric result-count (result)
+  (:method-combination merge-result-counts)
+  (:method merge-result-counts (result)
+    (apply #'merge-result-counts
+           (mapcar #'result-count (subresults result))))
+  (:method merge-result-counts ((result assertion-result))
+    (declare (ignore result))
+    '(:assertions 1))
+  (:method merge-result-counts ((result assertion-failed))
+    (declare (ignore result))
+    '(:failed-assertions 1))
+  (:method merge-result-counts ((result test-case-result))
+    (declare (ignore result))
+    '(:test-cases 1))
+  (:method merge-result-counts ((result test-case-aborted))
+    (declare (ignore result))
+    '(:aborted-test-cases 1)))
+(defmethod print-result (reporter (result test-suite-result))
+  (let ((count (result-count result)))
+    (format (cui-reporter-stream reporter) "~%~&Ran ~D tests containing ~D assertions, failed ~D assertions, and aborted ~D tests.~%"
+            (getf count :test-cases)
+            (getf count :assertions)
+            (getf count :failed-assertions)
+            (getf count :aborted-test-cases))
+    result))
