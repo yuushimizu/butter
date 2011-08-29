@@ -27,6 +27,12 @@
   (is (:signalled sample-error (error 'sample-error)))
   (is (:signalled sample-error (error "ERROR"))))
 
+(deftest sample-type
+  (is (:type integer (generic-plus 10 20)))
+  (is (:type integer (generic-plus "A" "B")))
+  (is (:type string (generic-plus "A" "B")))
+  (is (:type string (generic-plus 10 20))))
+
 (deftest sample-with-message
   (is (= 10 (+ 1 2 3 4)) "1 + 2 + 3 + 4 = 10")
   (is (= 10 (+ 1 2 3)) "1 + 2 + 3 = 10")

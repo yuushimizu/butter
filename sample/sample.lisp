@@ -41,6 +41,14 @@
   (is (:signalled warning (warn 'sample-warning)))
   (is (:signalled error (warn 'sample-error))))
 
+(deftest smaple-type
+  (is (:type integer (+ 10 20)))
+  (is (:type string (concatenate 'string "A" "B")))
+  (is (:type vector (concatenate 'string "A" "B")))
+  (is (:type integer (generic-plus 10 20)))
+  (is (:type string (generic-plus "A" "B")))
+  (is (:type null nil)))
+
 (deftest sample-with-message
   (is (= 10 (* 2 5)) "2 * 5 = 10")
   (is (string= "FOOBAR" (concatenate 'string "FOO" "BAR")) "FOO + BAR = FOOBAR")
