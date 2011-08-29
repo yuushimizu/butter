@@ -70,7 +70,7 @@
           (parents-to-string)))))
 (defgeneric expression-string (value)
   (:method (value)
-    (princ-to-string value))
+    (prin1-to-string value))
   (:method ((value condition))
     (format nil "~S: ~:*~A" value)))
 (defun print-signalled-conditions (stream result)
