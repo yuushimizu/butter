@@ -24,6 +24,7 @@
            :fail
            :assertion-expand
            :cons-assertion-expand
+           :define-special-assertion
            :is
            :are))
 
@@ -81,14 +82,22 @@
                     (fail `(not ,(list ',name ,@argument-variables))))))))))
  (defmethod assertion-expand ((expected cons) environment)
    (cons-assertion-expand (car expected) (cdr expected) environment))
- (defmethod cons-assertion-expand ((assertion-type (eql :signalled)) condition-type/forms environment)
-   (declare (ignore environment))
-   (destructuring-bind (condition-type &rest forms) condition-type/forms
-     (with-gensyms (condition%)
-       `(handler-bind ((,condition-type (lambda (,condition%)
-                                          (pass ,condition%))))
-          ,@forms
-          (fail nil))))))
+ (defmacro define-special-assertion (name lambda-list &rest forms)
+   (with-gensyms (assertion-type% arguments% environment%)
+     (let ((environment-variable (second (member '&environment lambda-list))))
+       `(eval-always
+         (defmethod cons-assertion-expand ((,assertion-type% (eql ',name)) ,arguments% ,environment%)
+           (declare (ignore ,assertion-type%)
+                    (ignorable ,environment%))
+           (destructuring-bind ,lambda-list ,arguments%
+             ,@(if environment-variable
+                   `((declare (ignore ,environment-variable))
+                     (let ((,environment-variable ,environment%)) ,@forms))
+                   forms))))))))
+(define-special-assertion :signalled (condition-type &rest forms)
+  `(handler-bind ((,condition-type #'pass))
+     ,@forms
+     (fail nil)))
 (defun %is (expected message assertion-function)
   (start-test (make-instance 'assertion
                              :expected expected

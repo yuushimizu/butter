@@ -28,6 +28,7 @@
            :fail
            :assertion-expand
            :cons-assertion-expand
+           :define-special-assertion
            :is
            :are
            :test-case
