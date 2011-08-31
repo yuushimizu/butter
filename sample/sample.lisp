@@ -49,6 +49,11 @@
   (is (:type string (generic-plus "A" "B")))
   (is (:type null nil)))
 
+(deftest sample-print
+  (is (:print *standard-output* "helloworld" (princ "hello") (princ "world")))
+  (is (:print *standard-output* "1 + 2 = 3" (format t "~D + ~D = ~D" 1 2 (+ 1 2))))
+  (is (:print *debug-io* "debugstream" (princ "debugstream" *debug-io*))))
+
 (deftest sample-with-message
   (is (= 10 (* 2 5)) "2 * 5 = 10")
   (is (string= "FOOBAR" (concatenate 'string "FOO" "BAR")) "FOO + BAR = FOOBAR")
