@@ -18,7 +18,6 @@
            :signalled-conditions
            :assertion-passed
            :assertion-failed
-           :exit-as-passed
            :exit-as-failed
            :pass
            :fail
@@ -42,22 +41,20 @@
 (defmethod do-test ((assertion assertion))
   (multiple-value-bind (result-class/actual signalled-conditions)
       (capture-conditions
-       (restart-case (progn (funcall (slot-value assertion 'assertion-function))
-                            (error (format nil "The assertion ~A does not test anything." (name assertion))))
-         (exit-as-failed (&optional actual)
-           :report (lambda (stream) (format stream "Exit the assertion ~A as failed." (name assertion)))
-           (list 'assertion-failed actual))
-         (exit-as-passed (&optional actual)
-           :report (lambda (stream) (format stream "Exit the assertion ~A as passed." (name assertion)))
-           (list 'assertion-passed actual))))
+       (let ((exit-tag (gensym "EXIT-TAG")))
+         (catch exit-tag
+           (flet ((pass (actual) (throw exit-tag (list 'assertion-passed actual)))
+                  (fail (actual) (throw exit-tag (list 'assertion-failed actual))))
+             (restart-case (progn (funcall (slot-value assertion 'assertion-function)
+                                           :pass #'pass :fail #'fail)
+                                  (error (format nil "The assertion ~A does not test anything." (name assertion))))
+               (exit-as-failed (&optional actual)
+                 :report (lambda (stream) (format stream "Exit the assertion ~A as failed." (name assertion)))
+                 (fail actual)))))))
     (destructuring-bind (result-class actual) result-class/actual
       (list result-class
             :signalled-conditions signalled-conditions
             :actual actual))))
-(defun pass (actual)
-  (invoke-restart 'exit-as-passed actual))
-(defun fail (actual)
-  (invoke-restart 'exit-as-failed actual))
 (eval-always
  (defgeneric assertion-expand (expected environment))
  (defun standard-assertion-expand (expected)
@@ -117,7 +114,13 @@
                              :message message
                              :assertion-function assertion-function)))
 (defmacro is (&environment environment expected &optional message)
-  `(%is ',expected ,message (lambda () ,(assertion-expand expected environment))))
+  (with-gensyms (pass% fail% actual%)
+    `(%is ',expected
+          ,message
+          (lambda (&key ((:pass ,pass%)) ((:fail ,fail%)))
+            (flet ((pass (,actual%) (funcall ,pass% ,actual%))
+                   (fail (,actual%) (funcall ,fail% ,actual%)))
+              ,(assertion-expand expected environment))))))
 (defmacro are (lambda-list assertion-body &rest argument-lists)
   (with-gensyms (expand-assertion%)
     `(macrolet ((,expand-assertion% ,lambda-list `(is ,,assertion-body)))

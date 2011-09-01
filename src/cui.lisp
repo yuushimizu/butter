@@ -16,7 +16,7 @@
                 :assertion-passed
                 :assertion-failed
                 :actual
-                :fail
+                :exit-as-failed
                 :test-case
                 :test-case-result
                 :test-case-aborted
@@ -45,7 +45,8 @@
     nil)
   (:method ((test assertion))
     (declare (ignore test))
-    #'fail)
+    (lambda (condition)
+      (invoke-restart 'exit-as-failed condition)))
   (:method ((test test-case))
     (declare (ignore test))
     (lambda (condition)

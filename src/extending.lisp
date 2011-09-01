@@ -22,7 +22,6 @@
            :signalled-conditions
            :assertion-passed
            :assertion-failed
-           :exit-as-passed
            :exit-as-failed
            :pass
            :fail

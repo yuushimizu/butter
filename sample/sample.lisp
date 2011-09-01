@@ -41,6 +41,10 @@
   (is (:signalled warning (warn 'sample-warning)))
   (is (:signalled error (warn 'sample-error))))
 
+(deftest sample-nested-signalled
+  (is (:signalled condition
+                  (is (= 10 (progn (signal "SIGNAL") 10))))))
+
 (deftest smaple-type
   (is (:type integer (+ 10 20)))
   (is (:type string (concatenate 'string "A" "B")))
