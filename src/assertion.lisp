@@ -120,6 +120,7 @@
           (lambda (&key ((:pass ,pass%)) ((:fail ,fail%)))
             (flet ((pass (,actual%) (funcall ,pass% ,actual%))
                    (fail (,actual%) (funcall ,fail% ,actual%)))
+              (declare (ignorable (function pass) (function fail)))
               ,(assertion-expand expected environment))))))
 (defmacro are (lambda-list assertion-body &rest argument-lists)
   (with-gensyms (expand-assertion%)
