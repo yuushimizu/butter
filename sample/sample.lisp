@@ -42,6 +42,7 @@
   (is (:signalled error (warn 'sample-error))))
 
 (deftest sample-nested-signalled
+    "The :signalled special assertion passes immediately when forms signals an expected condition. The following expression passes only the :signalled assertion, the \"=\" assertion is ignored."
   (is (:signalled condition
                   (is (= 10 (progn (signal "SIGNAL") 10))))))
 
