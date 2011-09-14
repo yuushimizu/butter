@@ -23,8 +23,6 @@
            :assertion-passed
            :assertion-failed
            :exit-as-failed
-           :pass
-           :fail
            :assertion-expand
            :cons-assertion-expand
            :define-special-assertion

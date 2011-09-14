@@ -6,8 +6,7 @@
 (define-special-assertion type? (type &rest forms)
   (let ((value% (gensym "VALUE")))
     `(let ((,value% (progn ,@forms)))
-       (funcall (if (typep ,value% ',type) #'pass #'fail)
-                (list ,value% (type-of ,value%))))))
+       (values (typep ,value% ',type) (list ,value% (type-of ,value%))))))
 
 (deftest type?
   (is (type? integer (generic-plus 10 20)))

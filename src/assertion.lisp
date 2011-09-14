@@ -19,8 +19,6 @@
            :assertion-passed
            :assertion-failed
            :exit-as-failed
-           :pass
-           :fail
            :assertion-expand
            :cons-assertion-expand
            :define-special-assertion
@@ -39,20 +37,16 @@
 (defclass assertion-passed (assertion-result) ())
 (defclass assertion-failed (assertion-result) ())
 (defmethod do-test ((assertion assertion))
-  (multiple-value-bind (result-class/actual signalled-conditions)
+  (multiple-value-bind (passed-p/actual signalled-conditions)
       (capture-conditions
-       (let ((exit-tag (gensym "EXIT-TAG")))
-         (catch exit-tag
-           (flet ((pass (actual) (throw exit-tag (list 'assertion-passed actual)))
-                  (fail (actual) (throw exit-tag (list 'assertion-failed actual))))
-             (restart-case (progn (funcall (slot-value assertion 'assertion-function)
-                                           :pass #'pass :fail #'fail)
-                                  (error (format nil "The assertion ~A does not test anything." (name assertion))))
-               (exit-as-failed (&optional actual)
-                 :report (lambda (stream) (format stream "Exit the assertion ~A as failed." (name assertion)))
-                 (fail actual)))))))
-    (destructuring-bind (result-class actual) result-class/actual
-      (list result-class
+       (multiple-value-bind (passed-p actual)
+           (restart-case (funcall (slot-value assertion 'assertion-function))
+             (exit-as-failed (&optional actual)
+               :report (lambda (stream) (format stream "Exit the assertion ~A as failed." (name assertion)))
+               (values nil actual)))
+         (list passed-p actual)))
+    (destructuring-bind (passed-p actual) passed-p/actual
+      (list (if passed-p 'assertion-passed 'assertion-failed)
             :signalled-conditions signalled-conditions
             :actual actual))))
 (eval-always
@@ -60,7 +54,7 @@
  (defun standard-assertion-expand (expected)
    (with-gensyms (actual%)
      `(let ((,actual% ,expected))
-        (funcall (if ,actual% #'pass #'fail) ,actual%))))
+        (values ,actual% ,actual%))))
  (defmethod assertion-expand (expected environment)
    (declare (ignore environment))
    (standard-assertion-expand expected))
@@ -70,13 +64,16 @@
          (standard-assertion-expand (cons name arguments))
          (flet ((argument-to-gensym (argument)
                   (if (keywordp argument) argument (gensym (princ-to-string argument)))))
-           (let ((argument-variables (mapcar #'argument-to-gensym arguments)))
+           (let ((argument-variables (mapcar #'argument-to-gensym arguments))
+                 (passed-p% (gensym "PASSED-P")))
              `(let ,(mapcan (lambda (variable argument)
                               (if (keywordp argument) () `((,variable ,argument))))
                             argument-variables arguments)
-                (if (,name ,@argument-variables)
-                    (pass (list ',name ,@argument-variables))
-                    (fail `(not ,(list ',name ,@argument-variables))))))))))
+                (let ((,passed-p% (,name ,@argument-variables)))
+                  (values ,passed-p%
+                          (if ,passed-p%
+                              (list ',name ,@argument-variables)
+                              `(not ,(list ',name ,@argument-variables)))))))))))
  (defmethod assertion-expand ((expected cons) environment)
    (cons-assertion-expand (car expected) (cdr expected) environment))
  (defmacro define-special-assertion (name lambda-list &rest forms)
@@ -92,36 +89,31 @@
                      (let ((,environment-variable ,environment%)) ,@forms))
                    forms))))))))
 (define-special-assertion :signalled (condition-type &rest forms)
-  `(handler-bind ((,condition-type #'pass))
-     ,@forms
-     (fail nil)))
+  (with-gensyms (condition%)
+    `(handler-case (progn
+                     ,@forms
+                     (values nil nil))
+       (,condition-type (,condition%) (values t ,condition%)))))
 (define-special-assertion :print (stream-variable expected &rest forms)
   (with-gensyms (stream% output%)
     `(let ((,output% (let* ((,stream% (make-string-output-stream))
                             (,stream-variable ,stream%))
                        ,@forms
                        (get-output-stream-string ,stream%))))
-       (funcall (if (string= ,expected ,output%) #'pass #'fail)
-                ,output%))))
+       (values (string= ,expected ,output%) ,output%))))
 (define-special-assertion typep (form type)
   (with-gensyms (value%)
     `(let ((,value% ,form))
-       (funcall (if (typep ,value% ,type) #'pass #'fail)
-                (list ,value% (type-of ,value%))))))
+       (values (typep ,value% ,type) (list ,value% (type-of ,value%))))))
 (defun %is (expected message assertion-function)
   (start-test (make-instance 'assertion
                              :expected expected
                              :message message
                              :assertion-function assertion-function)))
 (defmacro is (&environment environment expected &optional message)
-  (with-gensyms (pass% fail% actual%)
-    `(%is ',expected
-          ,message
-          (lambda (&key ((:pass ,pass%)) ((:fail ,fail%)))
-            (flet ((pass (,actual%) (funcall ,pass% ,actual%))
-                   (fail (,actual%) (funcall ,fail% ,actual%)))
-              (declare (ignorable (function pass) (function fail)))
-              ,(assertion-expand expected environment))))))
+  `(%is ',expected
+        ,message
+        (lambda () ,(assertion-expand expected environment))))
 (defmacro are (lambda-list assertion-body &rest argument-lists)
   (with-gensyms (expand-assertion%)
     `(macrolet ((,expand-assertion% ,lambda-list `(is ,,assertion-body)))
