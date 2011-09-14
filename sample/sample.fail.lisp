@@ -27,17 +27,17 @@
   (is (:signalled sample-error (error 'sample-error)))
   (is (:signalled sample-error (error "ERROR"))))
 
-(deftest sample-type
-  (is (:type integer (generic-plus 10 20)))
-  (is (:type integer (generic-plus "A" "B")))
-  (is (:type string (generic-plus "A" "B")))
-  (is (:type string (generic-plus 10 20))))
-
 (deftest sample-print
   (is (:print *standard-output* "helloworld" (princ "hello") (princ "world")))
   (is (:print *standard-output* "hello world" (princ "hello") (princ "world")))
   (is (:print *debug-io* "foobar" (princ "foobar" *debug-io*)))
   (is (:print *debug-io* "foobar" (princ "foo bar" *debug-io*))))
+
+(deftest sample-typep
+  (is (typep (generic-plus 10 20) 'integer))
+  (is (typep (generic-plus "A" "B") 'integer))
+  (is (typep (generic-plus "A" "B") 'string))
+  (is (typep (generic-plus 10 20) 'string)))
 
 (deftest sample-with-message
   (is (= 10 (+ 1 2 3 4)) "1 + 2 + 3 + 4 = 10")

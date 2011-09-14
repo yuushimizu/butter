@@ -46,18 +46,18 @@
   (is (:signalled condition
                   (is (= 10 (progn (signal "SIGNAL") 10))))))
 
-(deftest smaple-type
-  (is (:type integer (+ 10 20)))
-  (is (:type string (concatenate 'string "A" "B")))
-  (is (:type vector (concatenate 'string "A" "B")))
-  (is (:type integer (generic-plus 10 20)))
-  (is (:type string (generic-plus "A" "B")))
-  (is (:type null nil)))
-
 (deftest sample-print
   (is (:print *standard-output* "helloworld" (princ "hello") (princ "world")))
   (is (:print *standard-output* "1 + 2 = 3" (format t "~D + ~D = ~D" 1 2 (+ 1 2))))
   (is (:print *debug-io* "debugstream" (princ "debugstream" *debug-io*))))
+
+(deftest smaple-typep
+  (is (typep (+ 10 20) 'integer))
+  (is (typep (concatenate 'string "A" "B") 'string))
+  (is (typep (concatenate 'string "A" "B") 'vector))
+  (is (typep (generic-plus 10 20) 'integer))
+  (is (typep (generic-plus "A" "B") 'string))
+  (is (typep nil 'null)))
 
 (deftest sample-with-message
   (is (= 10 (* 2 5)) "2 * 5 = 10")

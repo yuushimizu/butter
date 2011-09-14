@@ -95,11 +95,6 @@
   `(handler-bind ((,condition-type #'pass))
      ,@forms
      (fail nil)))
-(define-special-assertion :type (type &rest forms)
-  (with-gensyms (value%)
-    `(let ((,value% (progn ,@forms)))
-       (funcall (if (typep ,value% ',type) #'pass #'fail)
-                (list ,value% (type-of ,value%))))))
 (define-special-assertion :print (stream-variable expected &rest forms)
   (with-gensyms (stream% output%)
     `(let ((,output% (let* ((,stream% (make-string-output-stream))
@@ -108,6 +103,11 @@
                        (get-output-stream-string ,stream%))))
        (funcall (if (string= ,expected ,output%) #'pass #'fail)
                 ,output%))))
+(define-special-assertion typep (form type)
+  (with-gensyms (value%)
+    `(let ((,value% ,form))
+       (funcall (if (typep ,value% ,type) #'pass #'fail)
+                (list ,value% (type-of ,value%))))))
 (defun %is (expected message assertion-function)
   (start-test (make-instance 'assertion
                              :expected expected
