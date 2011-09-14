@@ -12,12 +12,14 @@
                 :are)
   (:import-from :butter.test-suite
                 :deftest
-                :run-tests)
+                :run-tests
+                :run-all-tests)
   (:export :with-reporter
            :is
            :are
            :deftest
-           :run-tests))
+           :run-tests
+           :run-all-tests))
 
 (eval-always
  (defparameter *reporter* (make-instance 'cui-reporter)))

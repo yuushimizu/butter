@@ -40,5 +40,7 @@
            :test-suite-result
            :package-test-suite
            :test-cases
+           :test-packages
            :deftest
-           :run-tests))
+           :run-tests
+           :run-all-tests))

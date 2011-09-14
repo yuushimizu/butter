@@ -16,8 +16,10 @@
            :test-suite-result
            :package-test-suite
            :test-cases
+           :test-packages
            :deftest
-           :run-tests))
+           :run-tests
+           :run-all-tests))
 
 (defclass test-suite (test)
   ((package :initarg :package)))
@@ -35,7 +37,9 @@
                              :test (lambda (case1 case2) (eq (name case1) (name case2))))))
      test-case)
    (defun test-cases (test-suite)
-     (copy-list (gethash (package-name (slot-value test-suite 'package)) package-test-cases)))))
+     (copy-list (gethash (package-name (slot-value test-suite 'package)) package-test-cases)))
+   (defun test-packages ()
+     (loop for package-name being each hash-key of package-test-cases collect package-name))))
 (defmethod do-test ((test-suite test-suite))
   (mapc #'start-test (test-cases test-suite))
   '(test-suite-result))
@@ -45,5 +49,8 @@
       (let ((,test-case% (make-test-case ,name ,@forms)))
         (add-test-case ,test-case%)
         ,test-case%))))
-(defun run-tests (&optional (package *package*))
-  (start-test (package-test-suite package)))
+(defun run-tests (&rest packages)
+  (dolist (package (or packages (list *package*)))
+    (start-test (package-test-suite package))))
+(defun run-all-tests ()
+  (apply #'run-tests (test-packages)))
