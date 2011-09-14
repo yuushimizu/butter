@@ -44,7 +44,6 @@
     `(eval-always
       (let ((,test-case% (make-test-case ,name ,@forms)))
         (add-test-case ,test-case%)
-        (defun ,name () (start-test ,test-case%))
         ,test-case%))))
 (defun run-tests (&optional (package *package*))
   (start-test (package-test-suite package)))
