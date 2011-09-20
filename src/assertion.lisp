@@ -106,10 +106,11 @@
     `(let ((,value% ,form))
        (values (typep ,value% ,type) (list ,value% (type-of ,value%))))))
 (defun %is (expected message assertion-function)
-  (start-test (make-instance 'assertion
-                             :expected expected
-                             :message message
-                             :assertion-function assertion-function)))
+  (typep (start-test (make-instance 'assertion
+                                    :expected expected
+                                    :message message
+                                    :assertion-function assertion-function))
+         'assertion-passed))
 (defmacro is (&environment environment expected &optional message)
   `(%is ',expected
         ,message
