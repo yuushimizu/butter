@@ -107,16 +107,16 @@ The "run-all-tests" function runs all tests in all packages:
 
 ## Reporters
 
-Test reporter shows you results fo tests. The default test reporter prints results to *standard-output*. You can use an another test reporter with the "with-reporter" macro:
+Test reporter shows you results fo tests. The default test reporter prints results to \*standard-output\*. You can use an another test reporter with the "with-reporter" macro:
 
     (with-reporter (make-instance 'butter.cui:cui-reporter :verbose t)
       (run-tests))
 
 The "cui-reporter" class in the "butter.cui" package prints results to a stream. You can change the behavior of the reporter by following initargs:
 
-  - stream - An output-stream. The reporter prints results to the stream. It's *standard-output* by default.
-  - verbose - If the value is not nil, the reporter reports passed assertions, otherwise the reporter reports just only failed assertions. It's nil by default.
-  - invoke-debugger - If the value is not nil, the debugger is invoked when an error was signalled, otherwise the assertion is exited as failed. It's nil by default.
+  - stream - An output-stream. The reporter prints results to the stream. It's \*standard-output\* by default.
+  - verbose - If the value is not NIL, the reporter reports passed assertions, otherwise the reporter reports just only failed assertions. It's NIL by default.
+  - invoke-debugger - If the value is not NIL, the debugger is invoked when an error was signalled, otherwise the assertion is exited as failed. It's NIL by default.
 
 ## Extending Butter
 
@@ -133,4 +133,4 @@ This form makes the "my-eql" new special assertion. You can use it with the "is"
 
     (is (my-eql 10 (+ 3 7)))
 
-Forms made from special-assertions must return two values: The first is a non nil value if the assertion passes, otherwise nil, and the second is a some value that represents what actually happened.
+Forms made from special-assertions must return two values: The first is a non NIL value if the assertion passes, otherwise NIL, and the second is a some value that represents what actually happened.
