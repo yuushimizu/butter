@@ -116,7 +116,7 @@ The "cui-reporter" class in the "butter.cui" package prints results to a stream.
 
   - stream - An output-stream. The reporter prints results to the stream. It's \*standard-output\* by default.
   - verbose - If the value is not NIL, the reporter reports passed assertions, otherwise the reporter reports just only failed assertions. It's NIL by default.
-  - invoke-debugger - If the value is not NIL, the debugger is invoked when an error was signalled, otherwise the assertion is exited as failed. It's NIL by default.
+  - invoke-debugger - If the value is not NIL, the debugger is invoked when an error has occurred, otherwise the assertion is exited as failed. It's NIL by default.
 
 ## Extending Butter
 
