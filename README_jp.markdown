@@ -48,13 +48,13 @@ expected は *is* マクロに渡した式を表し、actual は実際に起こ�
 
 2つの特別なアサーションを用意しています。
 
-#### :signalled
+#### :signal
 
-*:signalled* はコンディションが通知されたかどうかをテストします。
+*:signal* はコンディションが通知されたかどうかをテストします。
 
-    (is (:signalled type-error (length 'a)))
+    (is (:signal type-error (length 'a)))
 
-*:signalled* はコンディションが通知された時点で即座にアサーションを成功させます。
+*:signal* はコンディションが通知された時点で即座にアサーションを成功させます。
 
 #### :print
 

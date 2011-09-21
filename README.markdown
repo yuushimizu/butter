@@ -48,13 +48,13 @@ An "is" expression returns T if its assertion passes, otherwise NIL.
 
 There are two special assertions for testing expressions.
 
-#### :signalled
+#### :signal
 
-The ":signalled" special assertion tests if a condition of a class is signalled:
+The ":signal" special assertion tests if a condition of a class is signalled:
 
-    (is (:signalled type-error (length 'a)))
+    (is (:signal type-error (length 'a)))
 
-The ":signalled" assertion passes immediately when an expected condition was signalled.
+The ":signal" assertion passes immediately when an expected condition was signalled.
 
 #### :print
 

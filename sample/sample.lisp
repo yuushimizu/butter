@@ -30,20 +30,20 @@
   (is (let ((x (+ 8 2))) (= 10 x)))
   (is (flet ((f (n) (and (positive-even-p n) (> n 10)))) (f 20))))
 
-(deftest sample-signalled
-  (is (:signalled condition (signal "SIGNAL")))
-  (is (:signalled warning (warn "WARNING")))
-  (is (:signalled error (error "ERROR")))
-  (is (:signalled sample-condition (signal 'sample-condition)))
-  (is (:signalled sample-warning (warn 'sample-warning)))
-  (is (:signalled sample-error (error 'sample-error)))
-  (is (:signalled condition (signal 'sample-condition)))
-  (is (:signalled warning (warn 'sample-warning)))
-  (is (:signalled error (warn 'sample-error))))
+(deftest sample-signal
+  (is (:signal condition (signal "SIGNAL")))
+  (is (:signal warning (warn "WARNING")))
+  (is (:signal error (error "ERROR")))
+  (is (:signal sample-condition (signal 'sample-condition)))
+  (is (:signal sample-warning (warn 'sample-warning)))
+  (is (:signal sample-error (error 'sample-error)))
+  (is (:signal condition (signal 'sample-condition)))
+  (is (:signal warning (warn 'sample-warning)))
+  (is (:signal error (warn 'sample-error))))
 
-(deftest sample-nested-signalled
-    "The :signalled special assertion passes immediately when forms signals an expected condition. The following expression passes only the :signalled assertion, the \"=\" assertion is ignored."
-  (is (:signalled condition
+(deftest sample-nested-signal
+    "The :signal special assertion passes immediately when forms signals an expected condition. The following expression passes only the :signal assertion, the \"=\" assertion is ignored."
+  (is (:signal condition
                   (is (= 10 (progn (signal "SIGNAL") 10))))))
 
 (deftest sample-print
@@ -74,7 +74,7 @@
        (4)
        (22)
        (42))
-  (are (type form) `(:signalled ,type ,form)
+  (are (type form) `(:signal ,type ,form)
        (condition (signal 'sample-condition))
        (warning (warn 'sample-warning))
        (error (error 'sample-error))))

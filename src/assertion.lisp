@@ -88,7 +88,7 @@
                    `((declare (ignore ,environment-variable))
                      (let ((,environment-variable ,environment%)) ,@forms))
                    forms))))))))
-(define-special-assertion :signalled (condition-type &rest forms)
+(define-special-assertion :signal (condition-type &rest forms)
   (with-gensyms (condition%)
     `(handler-case (progn
                      ,@forms

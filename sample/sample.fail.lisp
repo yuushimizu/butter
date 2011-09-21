@@ -19,13 +19,13 @@
   (is (positive-even-p 10))
   (is (positive-even-p 13)))
 
-(deftest sample-signalled
-  (is (:signalled error (error "ERROR")))
-  (is (:signalled error (+ 10 20)))
-  (is (:signalled sample-warning (warn 'sample-warning)))
-  (is (:signalled sample-warning (+ 1 2)))
-  (is (:signalled sample-error (error 'sample-error)))
-  (is (:signalled sample-error (error "ERROR"))))
+(deftest sample-signal
+  (is (:signal error (error "ERROR")))
+  (is (:signal error (+ 10 20)))
+  (is (:signal sample-warning (warn 'sample-warning)))
+  (is (:signal sample-warning (+ 1 2)))
+  (is (:signal sample-error (error 'sample-error)))
+  (is (:signal sample-error (error "ERROR"))))
 
 (deftest sample-print
   (is (:print *standard-output* "helloworld" (princ "hello") (princ "world")))
